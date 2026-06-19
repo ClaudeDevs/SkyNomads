@@ -18,6 +18,13 @@ signal player_left(id: String)
 signal world_snapshot(players: Array)
 signal move_rejected(authoritative_pos: Vector2)
 
+# Gathering / resource nodes
+signal nodes_snapshot(nodes: Array)
+signal node_state_changed(node_id: String, available: bool)
+signal gather_started(node_id: String, duration_ms: int)
+signal gather_result(node_id: String, success: bool, item_id: String, quantity: int)
+signal gather_cancelled(node_id: String, reason: String)
+
 @export var host: String = "127.0.0.1"
 @export var port: int = 7350
 @export var server_key: String = "defaultkey"
@@ -86,6 +93,14 @@ func send_move(pos: Vector2) -> void:
 	_socket.send_match_state_async(_match_id, NetContract.OP_MOVE_REQUEST, data)
 
 
+## Ask the server to gather a resource node. The server decides the outcome.
+func send_gather(node_id: String) -> void:
+	if _match_id == "" or _socket == null:
+		return
+	var data := JSON.stringify({ "node_id": node_id })
+	_socket.send_match_state_async(_match_id, NetContract.OP_GATHER_REQUEST, data)
+
+
 func _on_match_state(state) -> void:
 	var data = JSON.parse_string(state.data) if state.data != "" else {}
 	if data == null:
@@ -106,3 +121,13 @@ func _on_match_state(state) -> void:
 			world_snapshot.emit(data["players"])
 		NetContract.OP_MOVE_REJECTED:
 			move_rejected.emit(Vector2(data["x"], data["y"]))
+		NetContract.OP_NODES_SNAPSHOT:
+			nodes_snapshot.emit(data["nodes"])
+		NetContract.OP_NODE_STATE:
+			node_state_changed.emit(data["node_id"], data["available"])
+		NetContract.OP_GATHER_STARTED:
+			gather_started.emit(data["node_id"], int(data["duration_ms"]))
+		NetContract.OP_GATHER_RESULT:
+			gather_result.emit(data["node_id"], data["success"], data["item_id"], int(data["quantity"]))
+		NetContract.OP_GATHER_CANCELLED:
+			gather_cancelled.emit(data["node_id"], data["reason"])

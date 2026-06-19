@@ -43,8 +43,21 @@ docker compose up
 4. Add the `WorldNet` system (`scripts/systems/world_net.gd`) to your world
    scene, assign its `remote_player_scene` and `local_player_path`.
 
-## Phase 1 status
+## Status
 
-Server-authoritative movement: client predicts (`Player.gd`), streams position,
-server validates against `MAX_MOVE_SPEED` and broadcasts authoritative truth.
-See `shared/schemas/messages.md` for the message flow.
+**Phase 1 — server-authoritative movement.** Client predicts (`Player.gd`),
+streams position, server validates against `MAX_MOVE_SPEED` and broadcasts truth.
+
+**Phase 2 — sky-islands gathering/fishing loop.** Resource nodes are
+server-owned and pushed to clients on join. A gather is a request the server
+validates (proximity, availability, not-busy), times in ticks, then **rolls the
+loot table server-side** before returning the result. Loot odds live in
+`server/src/data/` and never reach the client. The local player enters the
+`GATHERING` state (movement locked) and shows "Line out — wait for a bite…".
+
+See `shared/schemas/messages.md` for both message flows.
+
+### Client pieces (for when you scaffold the Godot project)
+- `Player.gd` + `GatheringComponent` (child) → drives the `GATHERING` state
+- `ResourceManager` → spawns/updates nodes from the server snapshot
+- `ResourceNode` → per-node visual; needs an `"interact"` Input Map action

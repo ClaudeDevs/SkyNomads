@@ -8,6 +8,13 @@ export const OpCode = {
   PLAYER_LEFT: 4,
   WORLD_SNAPSHOT: 5,
   MOVE_REJECTED: 6,
+
+  GATHER_REQUEST: 7,
+  GATHER_STARTED: 8,
+  GATHER_RESULT: 9,
+  GATHER_CANCELLED: 10,
+  NODE_STATE: 11,
+  NODES_SNAPSHOT: 12,
 } as const;
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];

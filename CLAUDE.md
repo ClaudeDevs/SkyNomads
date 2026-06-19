@@ -132,6 +132,9 @@ Nakama supports three runtimes: **Go**, **TypeScript**, and **Lua**.
 │   │   ├── rpc/                # request/response RPCs (non-realtime)
 │   │   ├── hooks/              # before/after auth, storage hooks
 │   │   ├── validation/        # pure validators reused by matches & rpc
+│   │   ├── systems/           # pure game-logic helpers (e.g. loot-roller)
+│   │   ├── data/              # SERVER-ONLY data tables (loot odds, node defs)
+│   │   ├── contract/          # mirror of shared/ (opcodes, constants)
 │   │   └── persistence/       # storage read/write wrappers
 │   ├── tests/
 │   └── package.json
@@ -152,6 +155,9 @@ Nakama supports three runtimes: **Go**, **TypeScript**, and **Lua**.
   leaf scenes, `scripts/systems/` for cross-cutting logic.
 - Anything that defines client↔server behavior (limits, opcodes, message
   fields) belongs in `shared/`, **never** duplicated as a literal in both sides.
+- **Secret/exploitable data stays server-only.** Loot drop odds, spawn tables,
+  and anything a cheater would benefit from knowing live in `server/src/data/`,
+  never in `shared/`. The client sees only the *result* of a roll.
 - `assets/` is raw media only. No logic, no scenes.
 
 ---

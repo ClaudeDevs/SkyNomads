@@ -6,6 +6,7 @@ export const MOVE_TOLERANCE = 8.0; // px slack for latency/jitter
 export const NET_TICK_RATE = 10; // match loop Hz
 export const SPAWN_X = 0.0;
 export const SPAWN_Y = 0.0;
+export const GATHER_RANGE = 48.0; // px; how close a player must be to a node
 
 export const WORLD_MATCH_MODULE = "world";
 export const WORLD_MATCH_LABEL = "world";

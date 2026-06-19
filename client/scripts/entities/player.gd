@@ -26,6 +26,15 @@ enum State { IDLE, MOVING, GATHERING }
 var _state: State = State.IDLE
 
 
+func _ready() -> void:
+	# If a GatheringComponent is composed onto this entity, let it drive the
+	# GATHERING state (child emits up, parent reacts — CLAUDE.md §5).
+	var gather := get_node_or_null("GatheringComponent")
+	if gather != null:
+		gather.gather_began.connect(_on_gather_began)
+		gather.gather_ended.connect(_on_gather_ended)
+
+
 func _physics_process(_delta: float) -> void:
 	if _can_move():
 		_handle_movement()
@@ -65,3 +74,11 @@ func _handle_movement() -> void:
 ## i.e. each key travels along a tile axis rather than straight across the screen.
 func _cartesian_to_isometric(dir: Vector2) -> Vector2:
 	return Vector2(dir.x - dir.y, (dir.x + dir.y) * ISO_RATIO)
+
+
+func _on_gather_began() -> void:
+	_state = State.GATHERING  # _can_move() now returns false; the body freezes
+
+
+func _on_gather_ended() -> void:
+	_state = State.IDLE

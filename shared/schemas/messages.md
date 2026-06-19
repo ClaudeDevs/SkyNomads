@@ -14,6 +14,12 @@ Direction key: **C→S** client to server, **S→one** server to a single client
 | `OP_PLAYER_LEFT`     | S→all  | `{ "id": string }`                                  |
 | `OP_WORLD_SNAPSHOT`  | S→one  | `{ "players": [ { "id", "x", "y", "name" }, ... ] }` — sent to a joiner |
 | `OP_MOVE_REJECTED`   | S→one  | `{ "x": float, "y": float }` — authoritative position to snap back to |
+| `OP_GATHER_REQUEST`  | C→S    | `{ "node_id": string }` — "I want to gather this node" |
+| `OP_GATHER_STARTED`  | S→one  | `{ "node_id": string, "duration_ms": int }` — accepted; show cast/progress |
+| `OP_GATHER_RESULT`   | S→one  | `{ "node_id": string, "success": bool, "item_id": string, "quantity": int }` — the server's roll |
+| `OP_GATHER_CANCELLED`| S→one  | `{ "node_id": string, "reason": string }` — rejected/aborted (`too_far`, `on_cooldown`, `busy`, `unknown_node`, `moved`) |
+| `OP_NODE_STATE`      | S→all  | `{ "node_id": string, "available": bool }` — node depleted/respawned |
+| `OP_NODES_SNAPSHOT`  | S→one  | `{ "nodes": [ { "id", "type", "x", "y", "available" }, ... ] }` — sent to a joiner |
 
 ## Movement flow (the server-authority loop)
 
@@ -24,3 +30,25 @@ Direction key: **C→S** client to server, **S→one** server to a single client
    - **Invalid** → `OP_MOVE_REJECTED` to the sender only; client reconciles.
 3. Other clients render remotes from `OP_MOVE_BROADCAST`; each client ignores
    broadcasts carrying its own `id`.
+
+## Gathering flow (server-authoritative loot — CLAUDE.md §1)
+
+The client never decides what it caught. It only asks to gather; the server
+owns proximity, availability, timing, and the loot roll.
+
+1. Client (near a node) sends `OP_GATHER_REQUEST { node_id }` and optimistically
+   locks movement / shows a casting state.
+2. Server validates: node exists, is available (not on cooldown), player isn't
+   already gathering, and is within `GATHER_RANGE`.
+   - **Reject** → `OP_GATHER_CANCELLED { reason }`; client unlocks.
+   - **Accept** → reserve the node (`OP_NODE_STATE available:false` to all),
+     reply `OP_GATHER_STARTED { duration_ms }`; client shows "Line out…".
+3. After the node's duration elapses (counted in server ticks), the server
+   **rolls the loot table itself** and sends `OP_GATHER_RESULT`. The node stays
+   unavailable for its respawn time, then `OP_NODE_STATE available:true` to all.
+4. If the player moves during a gather, the server cancels it
+   (`OP_GATHER_CANCELLED reason:"moved"`) and frees the node.
+
+> Loot tables (drop odds) live **server-side only** (`server/src/data/`). They
+> are never part of the shared contract — the client must not depend on, or be
+> able to read, the odds.

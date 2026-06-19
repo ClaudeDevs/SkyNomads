@@ -5,5 +5,6 @@
   "NET_TICK_RATE": 10,
   "NET_SEND_RATE": 10.0,
   "SPAWN_X": 0.0,
-  "SPAWN_Y": 0.0
+  "SPAWN_Y": 0.0,
+  "GATHER_RANGE": 48.0
 }
