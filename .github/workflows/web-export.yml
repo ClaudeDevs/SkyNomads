@@ -37,6 +37,13 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/* ~/.local/share/godot/export_templates/
 
+      - name: Import assets
+        run: |
+          cd client
+          # Import textures/resources so the export has them. --import can exit
+          # non-zero even on success, so don't fail the job on it.
+          godot --headless --import || true
+
       - name: Export Web build
         run: |
           cd client
