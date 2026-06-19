@@ -4,6 +4,12 @@ An isometric MMO (sky-islands) built with **Godot 4** + **Nakama**.
 Architecture, conventions, and the all-important server-authority rules live in
 [`CLAUDE.md`](./CLAUDE.md) — read it first.
 
+## Credits
+
+Ground tiles are from the **Kenney "Isometric Landscape"** pack
+([kenney.nl](https://kenney.nl), CC0 / public domain). See
+`client/assets/sprites/tiles/KENNEY-LICENSE.txt`.
+
 ## Layout
 
 | Path        | What                                                          |
