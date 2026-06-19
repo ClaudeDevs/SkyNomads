@@ -31,7 +31,9 @@ func _ready() -> void:
 
 
 func _try_load(path: String) -> Texture2D:
-	return load(path) if ResourceLoader.exists(path) else null
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D  # `as` keeps the declared return type
+	return null
 
 
 func _draw() -> void:
