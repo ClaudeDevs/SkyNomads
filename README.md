@@ -29,7 +29,29 @@ docker compose up
 - Nakama API for the game client: `127.0.0.1:7350`
 - Nakama admin console: `http://127.0.0.1:7351` (`admin` / `password`)
 
-## Running the client
+## Play in the browser (no install) — GitHub Pages
+
+A GitHub Action exports the client to HTML5 and publishes it, so you can play in
+a browser tab without installing Godot.
+
+**One-time setup:**
+1. In the repo: **Settings → Pages → Build and deployment → Source = "GitHub Actions"**.
+2. Push to `main` or `claude/happy-gates-ibl0gt` (any change under `client/`),
+   or run the **Web Export** workflow manually from the **Actions** tab.
+3. When it finishes, the workflow's `deploy` step prints the **page URL**. Open
+   it and move with **WASD / arrows**.
+
+> The published build runs **offline** (movement only). To play the full online
+> loop in the browser you'd also need the backend hosted somewhere publicly
+> reachable and the Nakama Godot addon committed — that's a later step.
+
+Notes:
+- The export is **single-threaded** (`thread_support=false`) so it runs on plain
+  GitHub Pages, which can't send the COOP/COEP headers a threaded build needs.
+- Godot version is pinned in `.github/workflows/web-export.yml`
+  (`barichello/godot-ci:4.3.0`); keep it in sync with `project.godot`.
+
+## Running the client locally (optional)
 
 The `client/` folder is a ready-to-open Godot 4 project (the Input Map,
 `NetworkManager` autoload, scenes, and a `world.tscn` main scene are all wired).

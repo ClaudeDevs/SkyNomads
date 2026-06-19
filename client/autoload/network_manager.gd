@@ -42,15 +42,16 @@ var _match_id: String = ""
 ## Authenticate and open the realtime socket. Returns true on success.
 ## Returns false (and runs the game offline) if the Nakama addon isn't present.
 func connect_to_server(device_id: String = "") -> bool:
-	if device_id == "":
-		device_id = OS.get_unique_id()
-
 	# Resolve the Nakama addon singleton defensively so the project still runs
-	# (offline, movement-only) when the addon hasn't been installed yet.
+	# (offline, movement-only) when the addon hasn't been installed yet. Checked
+	# first so the web/offline build never touches addon-only or unsupported APIs.
 	var nakama := get_node_or_null("/root/Nakama")
 	if nakama == null:
 		push_warning("Nakama addon not found at /root/Nakama — running offline.")
 		return false
+
+	if device_id == "":
+		device_id = OS.get_unique_id()
 
 	_client = nakama.create_client(server_key, host, port, scheme)
 

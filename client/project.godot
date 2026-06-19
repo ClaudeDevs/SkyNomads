@@ -7,7 +7,7 @@ config_version=5
 
 config/name="SkyNomads"
 run/main_scene="res://scenes/world.tscn"
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 
@@ -17,6 +17,11 @@ NetworkManager="*res://autoload/network_manager.gd"
 
 window/size/viewport_width=1152
 window/size/viewport_height=648
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 
 [input]
 
