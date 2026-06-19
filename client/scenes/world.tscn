@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/bootstrap.gd" id="1_boot"]
 [ext_resource type="PackedScene" path="res://scenes/entities/player.tscn" id="2_player"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/entities/remote_player.tscn" id="4_remote"]
 [ext_resource type="Script" path="res://scripts/systems/resource_manager.gd" id="5_resmgr"]
 [ext_resource type="PackedScene" path="res://scenes/entities/resource_node.tscn" id="6_node"]
+[ext_resource type="Script" path="res://scripts/systems/iso_ground.gd" id="7_ground"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_boot")
@@ -17,6 +18,9 @@ layer = -1
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.41, 0.62, 0.86, 1)
+
+[node name="IsoGround" type="Node2D" parent="."]
+script = ExtResource("7_ground")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 

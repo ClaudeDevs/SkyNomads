@@ -49,7 +49,7 @@ Notes:
 - The export is **single-threaded** (`thread_support=false`) so it runs on plain
   GitHub Pages, which can't send the COOP/COEP headers a threaded build needs.
 - Godot version is pinned in `.github/workflows/web-export.yml`
-  (`barichello/godot-ci:4.3.0`); keep it in sync with `project.godot`.
+  (`barichello/godot-ci:4.3`); keep it in sync with `project.godot`.
 
 ## Running the client locally (optional)
 
