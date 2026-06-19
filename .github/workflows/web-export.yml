@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     # Pinned Godot version — keep in sync with client/project.godot config/features.
     container:
-      image: barichello/godot-ci:4.3.0
+      image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v4
 
