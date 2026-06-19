@@ -1,0 +1,9 @@
+{
+  "_comment": "Canonical tunables both sides must agree on. Mirrored in client/scripts/net/net_contract.gd and server/src/contract/constants.ts.",
+  "MAX_MOVE_SPEED": 120.0,
+  "MOVE_TOLERANCE": 8.0,
+  "NET_TICK_RATE": 10,
+  "NET_SEND_RATE": 10.0,
+  "SPAWN_X": 0.0,
+  "SPAWN_Y": 0.0
+}

@@ -294,4 +294,31 @@ considering a gameplay change complete, verify:
   pure validator, not another branch inside an existing god-script.
 - When unsure about a contract change, surface the opcode/payload diff explicitly
   in your summary so it can be reviewed.
+
+---
+
+## 12. Local Development & Running
+
+The backend runs in Docker; the client runs in the Godot editor.
+
+```bash
+# Server modules (TypeScript -> single bundle Nakama loads)
+cd server
+npm install
+npm run build      # -> server/build/index.js  (mounted into Nakama)
+npm test           # vitest: validator unit tests (reject paths included)
+
+# Backend stack
+docker compose up  # Postgres + Nakama (API :7350, console :7351)
 ```
+
+Client: install the [Nakama Godot addon](https://github.com/heroiclabs/nakama-godot)
+into `client/addons/`, register `NetworkManager` as an autoload, then
+`await NetworkManager.connect_to_server()` and `await NetworkManager.join_world()`.
+
+Build/run conventions:
+- Server is bundled with **rollup** to `server/build/index.js`; `build/` and
+  `node_modules/` are git-ignored. Commit source under `server/src/`, never the
+  bundle.
+- `docker-compose.yml` mounts `server/build/` into Nakama — rebuild after server
+  changes (`npm run build`) before `docker compose up`.

@@ -10,7 +10,9 @@ extends CharacterBody2D
 ## client cannot out-run what the server will accept.
 
 ## Screen-space movement speed in pixels/second.
-@export var speed: float = 120.0
+## Sourced from the shared contract so the client can never predict faster than
+## the server will accept (server validates against the same MAX_MOVE_SPEED).
+@export var speed: float = NetContract.MAX_MOVE_SPEED
 
 ## Tile is 32x16, so the isometric basis has a 2:1 (height:width) ratio.
 ## A cartesian input is squashed on Y by this factor to follow the tile axes.

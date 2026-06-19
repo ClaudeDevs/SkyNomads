@@ -1,0 +1,9 @@
+{
+  "_comment": "Canonical opcode table for SkyNomads. Source of truth. Both sides mirror this: client/scripts/net/net_contract.gd and server/src/contract/opcodes.ts. Never edit one mirror without the other (see CLAUDE.md §2).",
+  "OP_MOVE_REQUEST": 1,
+  "OP_MOVE_BROADCAST": 2,
+  "OP_PLAYER_JOINED": 3,
+  "OP_PLAYER_LEFT": 4,
+  "OP_WORLD_SNAPSHOT": 5,
+  "OP_MOVE_REJECTED": 6
+}

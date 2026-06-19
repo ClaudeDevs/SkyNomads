@@ -1,0 +1,55 @@
+# Local SkyNomads backend: Postgres + Nakama, loading the bundled server modules.
+#
+# 1. cd server && npm install && npm run build      # produces server/build/index.js
+# 2. docker compose up                              # boots Postgres + Nakama
+# 3. Nakama console: http://127.0.0.1:7351  (admin / password)
+#    Game client connects to 127.0.0.1:7350.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=nakama
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=localdb
+    volumes:
+      - skynomads_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "nakama"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  nakama:
+    image: heroiclabs/nakama:3.21.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "/bin/sh"
+      - "-ecx"
+      - >
+        /nakama/nakama migrate up --database.address postgres:localdb@postgres:5432/nakama &&
+        exec /nakama/nakama --name nakama1
+        --database.address postgres:localdb@postgres:5432/nakama
+        --logger.level DEBUG
+        --session.token_expiry_sec 7200
+        --runtime.js_entrypoint "index.js"
+    volumes:
+      # Nakama loads JS modules from /nakama/data/modules. We mount the built
+      # bundle there. Run `npm run build` in server/ first.
+      - ./server/build:/nakama/data/modules
+    healthcheck:
+      test: ["CMD", "/nakama/nakama", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "7349:7349"
+      - "7350:7350"
+      - "7351:7351"
+
+volumes:
+  skynomads_data:

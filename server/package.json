@@ -1,0 +1,20 @@
+{
+  "name": "skynomads-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SkyNomads authoritative Nakama runtime modules (TypeScript).",
+  "scripts": {
+    "build": "rollup -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "nakama-runtime": "github:heroiclabs/nakama-common",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.18.0",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}
