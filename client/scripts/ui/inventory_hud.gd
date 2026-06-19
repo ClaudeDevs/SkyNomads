@@ -1,18 +1,20 @@
 extends Label
 
-## Minimal inventory display. Listens to GameState (the client cache) and lists
-## what the player has caught. Placeholder for a real Items panel later.
+## Minimal inventory + wallet display. Listens to GameState (the client cache).
+## Placeholder for a real Items/Market panel later.
 
 func _ready() -> void:
-	GameState.inventory_changed.connect(_render)
-	_render(GameState.inventory)
+	GameState.inventory_changed.connect(func(_i): _render())
+	GameState.wallet_changed.connect(func(_c): _render())
+	_render()
 
 
-func _render(items: Dictionary) -> void:
-	if items.is_empty():
-		text = "Inventory: (empty)"
-		return
-	var lines: Array[String] = ["Inventory:"]
-	for item_id in items:
-		lines.append("  %s x%d" % [item_id, int(items[item_id])])
+func _render() -> void:
+	var lines: Array[String] = ["Coins: %d" % GameState.coins]
+	if GameState.inventory.is_empty():
+		lines.append("Inventory: (empty)")
+	else:
+		lines.append("Inventory:")
+		for item_id in GameState.inventory:
+			lines.append("  %s x%d" % [item_id, int(GameState.inventory[item_id])])
 	text = "\n".join(lines)

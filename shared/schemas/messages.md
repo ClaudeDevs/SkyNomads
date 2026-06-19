@@ -59,8 +59,25 @@ owns proximity, availability, timing, and the loot roll.
 |--------------------|-----------|--------------------------------------------|
 | `find_world_match` | `""`      | `{ "match_id": string }`                   |
 | `get_inventory`    | `""`      | `{ "items": { "<item_id>": quantity, … } }` |
+| `get_wallet`       | `""`      | `{ "coins": int }`                          |
+| `market_listings`  | `""`      | `{ "listings": [ Listing, … ] }`           |
+| `market_list_item` | `{ "item_id", "quantity", "price" }` | `{ "ok": bool, "listing_id"?, "reason"? }` |
+| `market_buy`       | `{ "listing_id" }` | `{ "ok": bool, "item_id"?, "quantity"?, "price"?, "reason"? }` |
 
-`get_inventory` returns only the **caller's** inventory (keyed off the
-authenticated `ctx.userId`). Inventory is persisted in Nakama storage
-(collection `inventory`, key `items`) with **server-only write permission** — a
-client can read its own inventory but can never modify it directly.
+`Listing` = `{ "listingId", "sellerId", "itemId", "quantity", "price" }`.
+
+`get_inventory` / `get_wallet` return only the **caller's** data (keyed off the
+authenticated `ctx.userId`). Inventory, wallet, and listings are persisted in
+Nakama storage with **server-only write permission** — a client can read its own
+inventory/balance but can never modify it directly.
+
+### Economy authority rules (Phase 4)
+- **Listing**: server removes the item from the seller's inventory *before*
+  creating the listing — you can't list what you don't own.
+- **Buying**: server validates funds and ownership, then deletes the listing
+  with a storage **version assertion first**, so two racing buyers can't both
+  win (no double-spend / item duplication). Coins and the item transfer only
+  after the listing is successfully claimed.
+- Starter balance and currency are server-only (`server/src/systems/wallet.ts`,
+  `server/src/data/`); the in-game coin is the layer a future crypto bridge
+  would settle against — the authority pattern stays identical.

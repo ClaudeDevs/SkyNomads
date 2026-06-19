@@ -125,6 +125,41 @@ func fetch_inventory() -> Dictionary:
 	return payload["items"]
 
 
+## Generic RPC helper. Returns the parsed response Dictionary, or {} on failure.
+func call_rpc(rpc_name: String, args: Dictionary = {}) -> Dictionary:
+	if _client == null or _session == null:
+		return {}
+	var body := JSON.stringify(args) if not args.is_empty() else ""
+	var res = await _client.rpc_async(_session, rpc_name, body)
+	if res.is_exception():
+		push_error("%s RPC failed: %s" % [rpc_name, res.get_exception().message])
+		return {}
+	var payload = JSON.parse_string(res.payload)
+	return payload if payload != null else {}
+
+
+## --- Marketplace (Phase 4) ---
+
+func fetch_wallet() -> int:
+	var res := await call_rpc("get_wallet")
+	return int(res.get("coins", 0))
+
+
+func fetch_listings() -> Array:
+	var res := await call_rpc("market_listings")
+	return res.get("listings", [])
+
+
+func market_list_item(item_id: String, quantity: int, price: int) -> Dictionary:
+	return await call_rpc("market_list_item", {
+		"item_id": item_id, "quantity": quantity, "price": price
+	})
+
+
+func market_buy(listing_id: String) -> Dictionary:
+	return await call_rpc("market_buy", { "listing_id": listing_id })
+
+
 func _on_match_state(state) -> void:
 	var data = JSON.parse_string(state.data) if state.data != "" else {}
 	if data == null:

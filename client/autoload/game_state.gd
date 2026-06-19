@@ -1,13 +1,15 @@
 extends Node
 
 ## Autoload: client-side cache of server-confirmed state (CLAUDE.md §6).
-## This is NOT authoritative — it's a read-mostly mirror of what the server last
-## told us. The server's storage is the source of truth; we fetch a fresh copy
-## on join and apply gather results optimistically in between.
+## NOT authoritative — a read-mostly mirror of what the server last told us.
+## The server's storage is the source of truth; we fetch fresh copies on join
+## and apply confirmed results optimistically in between.
 
 signal inventory_changed(items: Dictionary)
+signal wallet_changed(coins: int)
 
-var inventory: Dictionary = {}  # item_id (String) -> quantity (int)
+var inventory: Dictionary = {}  # item_id -> quantity
+var coins: int = 0
 
 
 func _ready() -> void:
@@ -17,18 +19,37 @@ func _ready() -> void:
 
 func _on_world_joined() -> void:
 	await refresh_inventory()
+	await refresh_wallet()
 
 
-## Pull the authoritative inventory from the server and replace our cache.
 func refresh_inventory() -> void:
-	var items := await NetworkManager.fetch_inventory()
-	inventory = items
+	inventory = await NetworkManager.fetch_inventory()
 	inventory_changed.emit(inventory)
 
 
+func refresh_wallet() -> void:
+	coins = await NetworkManager.fetch_wallet()
+	wallet_changed.emit(coins)
+
+
+## List an item for sale, then refresh from the server (inventory shrank).
+func list_item(item_id: String, quantity: int, price: int) -> Dictionary:
+	var result := await NetworkManager.market_list_item(item_id, quantity, price)
+	if result.get("ok", false):
+		await refresh_inventory()
+	return result
+
+
+## Buy a listing, then refresh (coins + inventory changed).
+func buy_listing(listing_id: String) -> Dictionary:
+	var result := await NetworkManager.market_buy(listing_id)
+	if result.get("ok", false):
+		await refresh_inventory()
+		await refresh_wallet()
+	return result
+
+
 func _on_gather_result(_node_id: String, success: bool, item_id: String, quantity: int) -> void:
-	# Optimistically apply the catch the server just confirmed. (Authoritative
-	# truth is in storage; a future refresh would reconcile any drift.)
 	if success and item_id != "":
 		inventory[item_id] = int(inventory.get(item_id, 0)) + quantity
 		inventory_changed.emit(inventory)
