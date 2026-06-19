@@ -52,3 +52,15 @@ owns proximity, availability, timing, and the loot roll.
 > Loot tables (drop odds) live **server-side only** (`server/src/data/`). They
 > are never part of the shared contract — the client must not depend on, or be
 > able to read, the odds.
+
+## RPCs (non-realtime request/response)
+
+| RPC                | Request   | Response                                   |
+|--------------------|-----------|--------------------------------------------|
+| `find_world_match` | `""`      | `{ "match_id": string }`                   |
+| `get_inventory`    | `""`      | `{ "items": { "<item_id>": quantity, … } }` |
+
+`get_inventory` returns only the **caller's** inventory (keyed off the
+authenticated `ctx.userId`). Inventory is persisted in Nakama storage
+(collection `inventory`, key `items`) with **server-only write permission** — a
+client can read its own inventory but can never modify it directly.

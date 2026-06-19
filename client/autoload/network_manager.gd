@@ -110,6 +110,21 @@ func send_gather(node_id: String) -> void:
 	_socket.send_match_state_async(_match_id, NetContract.OP_GATHER_REQUEST, data)
 
 
+## Fetch the player's authoritative inventory from the server (non-realtime RPC).
+## Returns a Dictionary of item_id -> quantity, or {} on failure/offline.
+func fetch_inventory() -> Dictionary:
+	if _client == null or _session == null:
+		return {}
+	var res = await _client.rpc_async(_session, "get_inventory", "")
+	if res.is_exception():
+		push_error("get_inventory RPC failed: %s" % res.get_exception().message)
+		return {}
+	var payload = JSON.parse_string(res.payload)
+	if payload == null or not payload.has("items"):
+		return {}
+	return payload["items"]
+
+
 func _on_match_state(state) -> void:
 	var data = JSON.parse_string(state.data) if state.data != "" else {}
 	if data == null:

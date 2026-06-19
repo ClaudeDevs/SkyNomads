@@ -15,6 +15,8 @@ import {
 import { validateMove } from "../../validation/movement-validator";
 import { validateGather } from "../../validation/gather-validator";
 import { rollLoot } from "../../systems/loot-roller";
+import { addItem } from "../../systems/inventory";
+import { readInventory, writeInventory } from "../../persistence/inventory-store";
 import { RESOURCE_NODES } from "../../data/resource-nodes";
 import { LOOT_TABLES } from "../../data/loot-tables";
 
@@ -279,7 +281,7 @@ function handleGather(
 
 function resolveGathers(
   dispatcher: nkruntime.MatchDispatcher,
-  _nk: nkruntime.Nakama,
+  nk: nkruntime.Nakama,
   logger: nkruntime.Logger,
   tick: number,
   state: MatchState,
@@ -309,8 +311,13 @@ function resolveGathers(
       );
     }
 
+    // Persist the catch to the player's inventory (server-authoritative storage).
+    if (drop.success) {
+      const current = readInventory(nk, userId);
+      writeInventory(nk, userId, addItem(current, drop.itemId, drop.quantity));
+    }
+
     logger.info("%s gathered %s -> %s x%d", userId, nodeId, drop.itemId || "(nothing)", drop.quantity);
-    // NOTE (Phase 3): persist the dropped item to the player's inventory here.
     player.gather = null;
   }
 }

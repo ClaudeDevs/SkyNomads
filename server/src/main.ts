@@ -4,6 +4,7 @@
 import { WORLD_MATCH_MODULE } from "./contract/constants";
 import { worldMatch } from "./matches/world/world-match";
 import { rpcFindWorldMatch } from "./rpc/find-world-match";
+import { rpcGetInventory } from "./rpc/get-inventory";
 
 function InitModule(
   _ctx: nkruntime.Context,
@@ -13,6 +14,7 @@ function InitModule(
 ): void {
   initializer.registerMatch(WORLD_MATCH_MODULE, worldMatch);
   initializer.registerRpc("find_world_match", rpcFindWorldMatch);
+  initializer.registerRpc("get_inventory", rpcGetInventory);
   logger.info("SkyNomads server modules loaded.");
 }
 
