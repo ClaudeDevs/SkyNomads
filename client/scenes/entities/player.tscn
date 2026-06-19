@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/entities/gathering_component.gd" id="2_gather"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(20, 24)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.32, 0.69, 1, 1)
+polygon = PackedVector2Array(0, -18, 12, 0, 0, 18, -12, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="GatheringComponent" type="Node" parent="."]
+script = ExtResource("2_gather")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true

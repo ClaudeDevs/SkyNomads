@@ -31,17 +31,25 @@ docker compose up
 
 ## Running the client
 
-1. Install the [Nakama Godot addon](https://github.com/heroiclabs/nakama-godot)
-   into `client/addons/` and enable it (provides the `Nakama` singleton).
-2. Register autoloads in **Project Settings → Autoload**:
-   - `NetworkManager` → `res://autoload/network_manager.gd`
-3. From a bootstrap script, connect and join:
-   ```gdscript
-   await NetworkManager.connect_to_server()
-   await NetworkManager.join_world()
-   ```
-4. Add the `WorldNet` system (`scripts/systems/world_net.gd`) to your world
-   scene, assign its `remote_player_scene` and `local_player_path`.
+The `client/` folder is a ready-to-open Godot 4 project (the Input Map,
+`NetworkManager` autoload, scenes, and a `world.tscn` main scene are all wired).
+
+**Quick start (offline — no backend needed):**
+1. Install [Godot 4](https://godotengine.org) (4.3+ recommended).
+2. Open `client/` as a project, press **F5**.
+3. Move with **WASD** / arrow keys — you'll see the isometric movement.
+   (The HUD will say "Offline" until the backend is running.)
+
+**Full loop (online — multiplayer + fishing):**
+1. Start the backend (see above): `cd server && npm run build && docker compose up`.
+2. Install the [Nakama Godot addon](https://github.com/heroiclabs/nakama-godot)
+   into `client/addons/` and enable it in **Project Settings → Plugins**
+   (this provides the `Nakama` singleton at `/root/Nakama`).
+3. Press **F5**. The HUD shows "Online". Walk onto a green node and press **E**
+   to fish/gather. Launch a second copy to see another player sync.
+
+> Without the addon the project still runs (movement only); `NetworkManager`
+> detects the missing addon and stays offline instead of erroring.
 
 ## Status
 

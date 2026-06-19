@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/bootstrap.gd" id="1_boot"]
+[ext_resource type="PackedScene" path="res://scenes/entities/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/systems/world_net.gd" id="3_worldnet"]
+[ext_resource type="PackedScene" path="res://scenes/entities/remote_player.tscn" id="4_remote"]
+[ext_resource type="Script" path="res://scripts/systems/resource_manager.gd" id="5_resmgr"]
+[ext_resource type="PackedScene" path="res://scenes/entities/resource_node.tscn" id="6_node"]
+
+[node name="World" type="Node2D"]
+script = ExtResource("1_boot")
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Sky" type="ColorRect" parent="Background"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.41, 0.62, 0.86, 1)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="WorldNet" type="Node2D" parent="."]
+script = ExtResource("3_worldnet")
+remote_player_scene = ExtResource("4_remote")
+local_player_path = NodePath("../Player")
+
+[node name="ResourceManager" type="Node2D" parent="."]
+script = ExtResource("5_resmgr")
+resource_node_scene = ExtResource("6_node")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Status" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 596.0
+offset_right = 1128.0
+offset_bottom = 628.0
+text = "Connecting..."
