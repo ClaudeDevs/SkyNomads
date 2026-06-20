@@ -1,6 +1,7 @@
 import { readQuests, writeQuests } from "../persistence/quest-store";
 import { QUESTS } from "../data/quests";
-import { readWallet, writeWallet, addCoins } from "../persistence/wallet-store";
+import { readBalance, writeBalance } from "../persistence/wallet-store";
+import { addCoins } from "../systems/wallet";
 
 export const rpcClaimQuest: nkruntime.RpcFunction = function (
   _ctx: nkruntime.Context,
@@ -9,9 +10,7 @@ export const rpcClaimQuest: nkruntime.RpcFunction = function (
   payload: string,
 ) {
   const userId = _ctx.userId;
-  if (!userId) {
-    throw Error("User not found");
-  }
+  if (!userId) throw Error("User not found");
 
   let parsed: any;
   try {
@@ -25,21 +24,19 @@ export const rpcClaimQuest: nkruntime.RpcFunction = function (
 
   const quests = readQuests(nk, userId);
   const progress = quests.active[questId];
-
   if (!progress) throw Error("Quest not active");
   if (!progress.completed) throw Error("Quest not completed");
   if (progress.claimed) throw Error("Quest already claimed");
 
   const def = QUESTS[questId];
   if (!def) throw Error("Quest def missing");
-  
-  // Claim it
+
+  // Mark claimed, then pay out — wallet stays server-authoritative.
   progress.claimed = true;
   writeQuests(nk, userId, quests);
 
-  // Reward
-  const wallet = readWallet(nk, userId);
-  writeWallet(nk, userId, addCoins(wallet, def.rewardCoins));
+  const balance = readBalance(nk, userId);
+  writeBalance(nk, userId, addCoins(balance, def.rewardCoins));
 
   return JSON.stringify({ success: true, reward: def.rewardCoins });
 };
