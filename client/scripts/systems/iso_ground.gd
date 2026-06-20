@@ -2,17 +2,17 @@ extends Node2D
 class_name IsoGround
 
 ## Draws a floating sky-island from Kenney "Isometric Landscape" tiles (CC0):
-## grass interior, sandy beach ring, water rim. Tiles are real textures; if they
-## fail to load (e.g. import issue) it falls back to procedural diamonds so the
-## build never shows a blank screen.
+## grass core, sandy beach band, water moat. Tiles are real textures; if they
+## fail to load it falls back to procedural diamonds so the build never blanks.
 ##
-## Tiles render back-to-front so the cubes' sides overlap correctly, giving the
-## island real isometric depth.
+## Uses a FULL square grid with concentric (Chebyshev) rings so every ring is
+## contiguous — a Manhattan diamond leaves gaps in 1-thick outer rings.
+## Tiles render back-to-front so cube sides overlap, giving real iso depth.
 
-@export var radius: int = 8
+@export var radius: int = 7
 @export var tile_scale: float = 0.6
 
-# Top-diamond geometry of the Kenney landscape tiles (≈132x66 image, 2:1 top).
+# Top-diamond geometry of the Kenney landscape tiles (~132x66 image, 2:1 top).
 const STEP_X := 66.0   # half tile-width  (x distance per grid step)
 const STEP_Y := 33.0   # half tile-height (y distance per grid step)
 const DIAMOND_CX := 66.0  # diamond centre within the source image (x)
@@ -40,8 +40,7 @@ func _draw() -> void:
 	var cells: Array[Vector2i] = []
 	for gx in range(-radius, radius + 1):
 		for gy in range(-radius, radius + 1):
-			if abs(gx) + abs(gy) <= radius:
-				cells.append(Vector2i(gx, gy))
+			cells.append(Vector2i(gx, gy))
 	# Paint back-to-front (smaller gx+gy is further back / higher on screen).
 	cells.sort_custom(func(a, b): return (a.x + a.y) < (b.x + b.y))
 	for c in cells:
@@ -49,9 +48,9 @@ func _draw() -> void:
 
 
 func _ring_texture(distance: int) -> Texture2D:
-	if distance >= radius:
+	if distance >= radius - 1:
 		return _water
-	if distance >= radius - 2:
+	if distance >= radius - 3:
 		return _sand
 	return _grass
 
@@ -61,7 +60,8 @@ func _draw_tile(cell: Vector2i) -> void:
 		(cell.x - cell.y) * STEP_X * tile_scale,
 		(cell.x + cell.y) * STEP_Y * tile_scale
 	)
-	var distance: int = abs(cell.x) + abs(cell.y)
+	# Chebyshev distance -> concentric square rings (contiguous, no gaps).
+	var distance: int = max(abs(cell.x), abs(cell.y))
 	var tex := _ring_texture(distance)
 	if tex == null:
 		_draw_fallback(center, distance)
@@ -80,8 +80,8 @@ func _draw_fallback(center: Vector2, distance: int) -> void:
 		center + Vector2(0, hh), center + Vector2(-hw, 0),
 	])
 	var color := Color(0.49, 0.74, 0.42)
-	if distance >= radius:
+	if distance >= radius - 1:
 		color = Color(0.36, 0.62, 0.86)
-	elif distance >= radius - 2:
+	elif distance >= radius - 3:
 		color = Color(0.88, 0.81, 0.58)
 	draw_colored_polygon(pts, color)
