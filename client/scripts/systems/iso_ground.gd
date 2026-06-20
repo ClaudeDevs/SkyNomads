@@ -1,161 +1,104 @@
 extends Node2D
 class_name IsoGround
 
-## Floating sky-island from Kenney "Isometric Landscape" tiles (CC0): grass core
-## with a sandy rim, code-drawn props, and a hovered-tile highlight.
+## Floating hex sky-island from the Kenney "Hexagon Tiles" pack (CC0).
+## Tiles are isometric hexagonal blocks; placement uses the measured top-face
+## lattice (center-to-center vectors E1/E2). Trees, rocks and bushes are real
+## sprites from the same pack. Everything draws back-to-front for depth.
+##
+## If a tiny seam/overlap appears, nudge E1_X / E2_X / E2_Y by ±1.
 
-@export var radius: int = 7
-@export var tile_scale: float = 0.6
+@export var radius: int = 4          # island size in hex rings
+@export var tile_scale: float = 1.0
 
-const STEP_X := 66.0
-const STEP_Y := 33.0
-const DIAMOND_CX := 66.0
-const DIAMOND_CY := 33.0
+# Hex lattice (center-to-center, in source pixels) measured from the tiles.
+const E1_X := 64.0
+const E2_X := 32.0
+const E2_Y := -41.0
+# Top-face centre within the 65x89 source image.
+const ANCHOR := Vector2(32.0, 27.0)
 
 var _grass: Texture2D
-var _sand: Texture2D
-var _hover_cell := Vector2i(9999, 9999)
+var _dirt: Texture2D
+var _tree: Texture2D
+var _tree_tall: Texture2D
+var _rock: Texture2D
+var _bush: Texture2D
+var _flower: Texture2D
 
 
 func _ready() -> void:
-	_grass = _try_load("res://assets/sprites/tiles/grass.png")
-	_sand = _try_load("res://assets/sprites/tiles/sand.png")
+	_grass = _load("res://assets/sprites/hex_grass.png")
+	_dirt = _load("res://assets/sprites/hex_dirt.png")
+	_tree = _load("res://assets/sprites/tree.png")
+	_tree_tall = _load("res://assets/sprites/tree_tall.png")
+	_rock = _load("res://assets/sprites/rock.png")
+	_bush = _load("res://assets/sprites/bush.png")
+	_flower = _load("res://assets/sprites/flower.png")
 	queue_redraw()
 
 
-func _process(_dt: float) -> void:
-	var cell := _mouse_cell()
-	if cell != _hover_cell:
-		_hover_cell = cell
-		queue_redraw()
-
-
-func _mouse_cell() -> Vector2i:
-	var m := get_local_mouse_position()
-	var fx := m.x / (STEP_X * tile_scale)
-	var fy := m.y / (STEP_Y * tile_scale)
-	return Vector2i(roundi((fx + fy) / 2.0), roundi((fy - fx) / 2.0))
-
-
-func _try_load(path: String) -> Texture2D:
+func _load(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
 		return load(path) as Texture2D
 	return null
 
 
+func _hex_to_screen(q: int, r: int) -> Vector2:
+	return Vector2(E1_X * q + E2_X * r, E2_Y * r) * tile_scale
+
+
 func _draw() -> void:
-	var cells: Array[Vector2i] = []
-	for gx in range(-radius, radius + 1):
-		for gy in range(-radius, radius + 1):
-			cells.append(Vector2i(gx, gy))
-	cells.sort_custom(func(a, b): return (a.x + a.y) < (b.x + b.y))
+	var cells: Array = []
+	for q in range(-radius, radius + 1):
+		for r in range(-radius, radius + 1):
+			var d: int = (absi(q) + absi(r) + absi(q + r)) / 2
+			if d <= radius:
+				cells.append(Vector2i(q, r))
+	cells.sort_custom(func(a, b): return _hex_to_screen(a.x, a.y).y < _hex_to_screen(b.x, b.y).y)
+
 	for c in cells:
-		_draw_tile(c)
+		var pos := _hex_to_screen(c.x, c.y)
+		var d: int = (absi(c.x) + absi(c.y) + absi(c.x + c.y)) / 2
+		var tex := _dirt if d == radius else _grass
+		_draw_tile(tex, pos)
+
 	_draw_props()
-	if abs(_hover_cell.x) <= radius and abs(_hover_cell.y) <= radius:
-		_draw_highlight(_hover_cell)
 
 
-func _ring_texture(distance: int) -> Texture2D:
-	if distance >= radius - 1:
-		return _sand
-	return _grass
-
-
-func _draw_tile(cell: Vector2i) -> void:
-	var center := _cell_to_screen(cell)
-	var distance: int = max(abs(cell.x), abs(cell.y))
-	var tex := _ring_texture(distance)
+func _draw_tile(tex: Texture2D, pos: Vector2) -> void:
 	if tex == null:
-		_draw_fallback(center, distance)
 		return
-	var size := tex.get_size() * tile_scale
-	var top_left := center - Vector2(DIAMOND_CX * tile_scale, DIAMOND_CY * tile_scale)
-	draw_texture_rect(tex, Rect2(top_left, size), false)
+	var top_left := pos - ANCHOR * tile_scale
+	draw_texture_rect(tex, Rect2(top_left, tex.get_size() * tile_scale), false)
 
 
-func _cell_to_screen(cell: Vector2i) -> Vector2:
-	return Vector2(
-		(cell.x - cell.y) * STEP_X * tile_scale,
-		(cell.x + cell.y) * STEP_Y * tile_scale
-	)
+func _draw_sprite_at(tex: Texture2D, q: int, r: int) -> void:
+	if tex == null:
+		return
+	var pos := _hex_to_screen(q, r)
+	var s := tex.get_size() * tile_scale
+	draw_texture_rect(tex, Rect2(pos - Vector2(s.x / 2.0, s.y - 6.0 * tile_scale), s), false)
 
 
 func _draw_props() -> void:
 	var props := [
-		[Vector2i(-4, -2), "tree"], [Vector2i(3, -3), "tree"], [Vector2i(2, 3), "tree"],
-		[Vector2i(0, 4), "tree"], [Vector2i(-3, 3), "rock"], [Vector2i(-2, -4), "rock"],
-		[Vector2i(4, 1), "bush"], [Vector2i(4, -4), "bush"], [Vector2i(-4, 4), "bush"],
+		[-2, -1, "tree"], [1, -2, "tree_tall"], [2, 0, "tree"],
+		[-1, 2, "tree_tall"], [0, 1, "rock"], [-3, 1, "bush"],
+		[3, -1, "bush"], [-1, -2, "flower"], [2, 1, "flower"],
 	]
-	props.sort_custom(func(a, b): return (a[0].x + a[0].y) < (b[0].x + b[0].y))
+	props.sort_custom(func(a, b): return _hex_to_screen(a[0], a[1]).y < _hex_to_screen(b[0], b[1]).y)
 	for p in props:
-		var cell: Vector2i = p[0]
-		var base := _cell_to_screen(cell)
-		draw_colored_polygon(_ellipse(base + Vector2(0, 1), 9.0, 3.5), Color(0, 0, 0, 0.16))
-		match p[1]:
+		var q: int = p[0]
+		var r: int = p[1]
+		match p[2]:
 			"tree":
-				_draw_tree(base)
+				_draw_sprite_at(_tree, q, r)
+			"tree_tall":
+				_draw_sprite_at(_tree_tall, q, r)
 			"rock":
-				_draw_rock(base)
+				_draw_sprite_at(_rock, q, r)
 			"bush":
-				_draw_bush(base)
-
-
-func _draw_tree(base: Vector2) -> void:
-	draw_rect(Rect2(base.x - 2, base.y - 13, 4, 13), Color(0.45, 0.31, 0.18))
-	draw_circle(base + Vector2(0, -15), 11.0, Color(0.18, 0.42, 0.20))
-	draw_circle(base + Vector2(0, -21), 8.5, Color(0.24, 0.52, 0.27))
-	draw_circle(base + Vector2(-2.5, -24), 5.5, Color(0.33, 0.64, 0.35))
-
-
-func _draw_rock(base: Vector2) -> void:
-	var pts := PackedVector2Array([
-		base + Vector2(-9, 0), base + Vector2(-5, -7), base + Vector2(4, -8),
-		base + Vector2(9, -2), base + Vector2(6, 2), base + Vector2(-6, 2),
-	])
-	draw_colored_polygon(pts, Color(0.54, 0.54, 0.60))
-	draw_colored_polygon(PackedVector2Array([
-		base + Vector2(-5, -7), base + Vector2(4, -8),
-		base + Vector2(1, -3), base + Vector2(-3, -3),
-	]), Color(0.66, 0.66, 0.71))
-
-
-func _draw_bush(base: Vector2) -> void:
-	draw_circle(base + Vector2(-4, -3), 5.0, Color(0.20, 0.46, 0.23))
-	draw_circle(base + Vector2(3, -3), 5.5, Color(0.24, 0.52, 0.27))
-	draw_circle(base + Vector2(0, -6), 5.0, Color(0.30, 0.60, 0.32))
-	draw_circle(base + Vector2(-2, -5), 1.2, Color(0.86, 0.27, 0.32))
-	draw_circle(base + Vector2(3, -4), 1.2, Color(0.86, 0.27, 0.32))
-
-
-func _draw_highlight(cell: Vector2i) -> void:
-	var c := _cell_to_screen(cell)
-	var hw := STEP_X * tile_scale
-	var hh := STEP_Y * tile_scale
-	var pts := PackedVector2Array([
-		c + Vector2(0, -hh), c + Vector2(hw, 0),
-		c + Vector2(0, hh), c + Vector2(-hw, 0),
-	])
-	draw_colored_polygon(pts, Color(1, 1, 1, 0.20))
-	draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), Color(1, 1, 1, 0.7), 2.0)
-
-
-func _draw_fallback(center: Vector2, distance: int) -> void:
-	var hw := STEP_X * tile_scale
-	var hh := STEP_Y * tile_scale
-	var pts := PackedVector2Array([
-		center + Vector2(0, -hh), center + Vector2(hw, 0),
-		center + Vector2(0, hh), center + Vector2(-hw, 0),
-	])
-	var color := Color(0.49, 0.74, 0.42)
-	if distance >= radius - 1:
-		color = Color(0.88, 0.81, 0.58)
-	draw_colored_polygon(pts, color)
-
-
-func _ellipse(center: Vector2, rx: float, ry: float) -> PackedVector2Array:
-	var pts := PackedVector2Array()
-	for i in 16:
-		var a := TAU * i / 16.0
-		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
-	return pts
+				_draw_sprite_at(_bush, q, r)
+			"flower":
+				_draw_sprite_at(_flower, q, r)
