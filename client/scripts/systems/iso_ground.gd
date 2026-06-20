@@ -49,7 +49,7 @@ func _ready() -> void:
 func _on_island_snapshot(objects: Array) -> void:
 	placed_objects.clear()
 	for obj in objects:
-		placed_objects.append([int(obj.q), int(obj.r), obj.type])
+		placed_objects.append([int(obj["q"]), int(obj["r"]), obj["type"]])
 	queue_redraw()
 
 func _on_object_built(q: int, r: int, type: String) -> void:
@@ -115,11 +115,18 @@ func _draw() -> void:
 		_draw_tile(tex, pos)
 		
 		if c == target_hex:
-			_draw_tile(tex, pos, Color(1.0, 1.0, 0.0, 0.4))
+			draw_colored_polygon(_ellipse(pos, 34.0 * tile_scale, 20.0 * tile_scale), Color(1.0, 1.0, 0.0, 0.4))
 		elif c == hovered_hex:
-			_draw_tile(tex, pos, Color(1.0, 1.0, 1.0, 0.3))
+			draw_colored_polygon(_ellipse(pos, 34.0 * tile_scale, 20.0 * tile_scale), Color(1.0, 1.0, 1.0, 0.3))
 
 	_draw_props()
+
+func _ellipse(center: Vector2, rx: float, ry: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 16:
+		var a := TAU * i / 16.0
+		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
+	return pts
 
 func _draw_tile(tex: Texture2D, pos: Vector2, modulate: Color = Color.WHITE) -> void:
 	if tex == null:
