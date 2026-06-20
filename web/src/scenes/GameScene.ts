@@ -15,9 +15,18 @@ export class GameScene extends Phaser.Scene {
   private moveSpeed = 120; // units per second
   
   private highlightGraphics!: Phaser.GameObjects.Graphics;
+  private treeSprites: Map<string, Phaser.GameObjects.Image> = new Map();
 
   constructor() {
     super('GameScene');
+  }
+
+  preload() {
+    // Load the assets from the public/assets folder
+    this.load.image('grass_tile', '/assets/grass_tile.png');
+    this.load.image('dirt_tile', '/assets/dirt_tile.png');
+    this.load.image('tree', '/assets/tree.png');
+    this.load.image('player', '/assets/player.png');
   }
 
   create() {
@@ -66,6 +75,25 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Handle Network Events
+    network.onNodesSnapshot = (data: any) => {
+      for (const n of data.nodes) {
+        if (n.type === 'tree') {
+          const iso = cartesianToIso({ x: n.x, y: n.y });
+          const treeSprite = this.add.image(iso.x, iso.y - 10, 'tree');
+          treeSprite.setOrigin(0.5, 1); // bottom center
+          treeSprite.setDepth(iso.y + 10); // Sort behind players slightly
+          this.treeSprites.set(n.id, treeSprite);
+        }
+      }
+    };
+    
+    network.onNodeState = (data: any) => {
+      const sprite = this.treeSprites.get(data.node_id);
+      if (sprite) {
+        sprite.setVisible(data.available);
+      }
+    };
+
     network.onWorldSnapshot = (data: any) => {
       this.localPlayerId = network.session?.user_id || "";
       for (const p of data.players) {
@@ -132,7 +160,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addPlayer(id: string, x: number, y: number) {
-    const container = this.add.container(x, y - 10); // elevated by block height
+    const container = this.add.container(x, y - 10); // elevated slightly
     
     // Shadow
     const shadow = this.add.graphics();
@@ -140,14 +168,19 @@ export class GameScene extends Phaser.Scene {
     shadow.fillEllipse(0, 0, 24, 12);
     container.add(shadow);
 
-    // Body
-    const p = this.add.graphics();
+    // Player Sprite
+    const p = this.add.image(0, -20, 'player');
     p.name = 'body';
-    p.fillStyle(id === this.localPlayerId ? 0x00d2ff : 0xff5555, 1);
-    p.fillRoundedRect(-10, -40, 20, 40, 4);
-    p.lineStyle(2, 0xffffff, 0.8);
-    p.strokeRoundedRect(-10, -40, 20, 40, 4);
+    p.setOrigin(0.5, 1); // bottom center
+    
+    // Fallback if image fails
+    p.on('pointerdown', () => console.log('clicked player'));
     container.add(p);
+
+    // Give local player a slight blue tint, others red (if using pure white base sprite)
+    if (id !== this.localPlayerId) {
+      p.setTint(0xff8888);
+    }
 
     container.setDepth(y + 100);
     this.players.set(id, container);
@@ -159,7 +192,6 @@ export class GameScene extends Phaser.Scene {
 
   private renderIsland() {
     // We want to sort blocks back-to-front.
-    // In an isometric grid, blocks with lower (x+y) are further back.
     const tiles = [];
     for (let x = -MAP_RADIUS; x <= MAP_RADIUS; x++) {
       for (let y = -MAP_RADIUS; y <= MAP_RADIUS; y++) {
@@ -172,46 +204,12 @@ export class GameScene extends Phaser.Scene {
 
     for (const t of tiles) {
       const iso = cartesianToIso({ x: t.x, y: t.y });
-      this.drawIsometricBlock(iso.x, iso.y);
+      // Draw actual sprite tile!
+      const tile = this.add.image(iso.x, iso.y, 'grass_tile');
+      // Most isometric tiles need origin at bottom-center or center
+      tile.setOrigin(0.5, 0.5); 
+      tile.setDepth(iso.y);
     }
-  }
-
-  private drawIsometricBlock(x: number, y: number) {
-    const depth = 10; // Block height
-    const hw = TILE_W / 2;
-    const hh = TILE_H / 2;
-    
-    const g = this.add.graphics();
-    g.setDepth(y);
-
-    // Right face (Dirt - Dark)
-    g.fillStyle(0x6b4c3a, 1);
-    g.beginPath();
-    g.moveTo(x, y + hh - depth);
-    g.lineTo(x + hw, y - depth);
-    g.lineTo(x + hw, y);
-    g.lineTo(x, y + hh);
-    g.closePath();
-    g.fillPath();
-    g.lineStyle(1, 0x000000, 0.2);
-    g.strokePath();
-
-    // Left face (Dirt - Light)
-    g.fillStyle(0x8c634c, 1);
-    g.beginPath();
-    g.moveTo(x - hw, y - depth);
-    g.lineTo(x, y + hh - depth);
-    g.lineTo(x, y + hh);
-    g.lineTo(x - hw, y);
-    g.closePath();
-    g.fillPath();
-    g.strokePath();
-
-    // Top face (Grass)
-    g.fillStyle(0x85c247, 1);
-    this.drawDiamond(g, x, y - depth);
-    g.lineStyle(1, 0x000000, 0.1);
-    g.strokePath();
   }
 
   private drawDiamond(g: Phaser.GameObjects.Graphics, x: number, y: number) {
