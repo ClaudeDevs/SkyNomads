@@ -36,8 +36,6 @@ var _target := Vector2.ZERO
 var build_mode := false
 var build_item := "tree"
 
-@onready var _anim := $AnimatedSprite2D
-
 
 func _ready() -> void:
 	var body := get_node_or_null("Body")

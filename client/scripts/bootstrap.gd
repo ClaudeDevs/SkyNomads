@@ -20,15 +20,15 @@ func _ready() -> void:
 func _connect() -> void:
 	var connected: bool = await NetworkManager.connect_to_server()
 	if not connected:
-		_status.text = "Offline — move with WASD / arrows. (Start the backend to fish.)"
+		_status.text = "Offline — click to move. (Start the backend to fish.)"
 		return
 
-	var joined: bool = await NetworkManager.join_world()
+	var joined: bool = await NetworkManager.join_island()
 	if not joined:
 		_status.text = "Connected, but couldn't join the world."
 		return
 
-	_status.text = "Online — walk to a green node and press E to gather."
+	_status.text = "Online — click to move. Press B for build mode."
 
 
 func _on_status_changed(text: String) -> void:

@@ -61,6 +61,10 @@ func _process(_delta: float) -> void:
 	if h != hovered_hex:
 		hovered_hex = h
 		queue_redraw()
+		# Clamp: only highlight if within island radius
+		var d := (absi(h.x) + absi(h.y) + absi(h.x + h.y)) / 2
+		if d > radius:
+			hovered_hex = Vector2i(999, 999)
 
 func _load(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
@@ -68,11 +72,12 @@ func _load(path: String) -> Texture2D:
 	return null
 
 func hex_to_screen(q: int, r: int) -> Vector2:
-	return _hex_to_screen(q, r)
+	return _hex_to_screen(q, r) + global_position
 
-func screen_to_hex(pos: Vector2) -> Vector2i:
-	var x := pos.x / tile_scale
-	var y := pos.y / tile_scale
+func screen_to_hex(screen_pos: Vector2) -> Vector2i:
+	var local_pos := screen_pos - global_position
+	var x := local_pos.x / tile_scale
+	var y := local_pos.y / tile_scale
 	
 	var r_f := y / E2_Y
 	var q_f := (x - E2_X * r_f) / E1_X
@@ -115,17 +120,29 @@ func _draw() -> void:
 		_draw_tile(tex, pos)
 		
 		if c == target_hex:
-			draw_colored_polygon(_ellipse(pos, 34.0 * tile_scale, 20.0 * tile_scale), Color(1.0, 1.0, 0.0, 0.4))
+			draw_colored_polygon(_hex_polygon(pos), Color(1.0, 1.0, 0.0, 0.35))
 		elif c == hovered_hex:
-			draw_colored_polygon(_ellipse(pos, 34.0 * tile_scale, 20.0 * tile_scale), Color(1.0, 1.0, 1.0, 0.3))
+			draw_colored_polygon(_hex_polygon(pos), Color(1.0, 1.0, 1.0, 0.25))
 
 	_draw_props()
 
-func _ellipse(center: Vector2, rx: float, ry: float) -> PackedVector2Array:
+## Build the 6-point isometric hex shape that matches the top face of our tiles.
+func _hex_polygon(center: Vector2) -> PackedVector2Array:
 	var pts := PackedVector2Array()
-	for i in 16:
-		var a := TAU * i / 16.0
-		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
+	# The top face of each 65x89 hex tile is roughly a flattened hexagon.
+	# These offsets were measured from the Kenney tile geometry:
+	#   width = E1_X = 64, half = 32
+	#   height = |E2_Y| = 41, half ≈ 20
+	#   The hex has a pointy-left/right shape in iso view.
+	var hw := 32.0 * tile_scale  # half-width
+	var hh := 20.0 * tile_scale  # half-height
+	var indent := 16.0 * tile_scale  # horizontal indent at top/bottom
+	pts.append(center + Vector2(-hw, 0))          # left
+	pts.append(center + Vector2(-indent, -hh))    # top-left
+	pts.append(center + Vector2(indent, -hh))     # top-right
+	pts.append(center + Vector2(hw, 0))            # right
+	pts.append(center + Vector2(indent, hh))       # bottom-right
+	pts.append(center + Vector2(-indent, hh))      # bottom-left
 	return pts
 
 func _draw_tile(tex: Texture2D, pos: Vector2, modulate: Color = Color.WHITE) -> void:
