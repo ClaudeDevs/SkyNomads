@@ -2,9 +2,7 @@ extends Node2D
 class_name IsoGround
 
 ## Floating sky-island from Kenney "Isometric Landscape" tiles (CC0): grass core
-## with a sandy dirt-sided rim. Decorative props (trees/rocks/bushes) are drawn
-## in code on the grass so the island feels alive without extra assets.
-## Tiles render back-to-front for real isometric depth.
+## with a sandy rim, code-drawn props, and a hovered-tile highlight.
 
 @export var radius: int = 7
 @export var tile_scale: float = 0.6
@@ -16,12 +14,27 @@ const DIAMOND_CY := 33.0
 
 var _grass: Texture2D
 var _sand: Texture2D
+var _hover_cell := Vector2i(9999, 9999)
 
 
 func _ready() -> void:
 	_grass = _try_load("res://assets/sprites/tiles/grass.png")
 	_sand = _try_load("res://assets/sprites/tiles/sand.png")
 	queue_redraw()
+
+
+func _process(_dt: float) -> void:
+	var cell := _mouse_cell()
+	if cell != _hover_cell:
+		_hover_cell = cell
+		queue_redraw()
+
+
+func _mouse_cell() -> Vector2i:
+	var m := get_local_mouse_position()
+	var fx := m.x / (STEP_X * tile_scale)
+	var fy := m.y / (STEP_Y * tile_scale)
+	return Vector2i(roundi((fx + fy) / 2.0), roundi((fy - fx) / 2.0))
 
 
 func _try_load(path: String) -> Texture2D:
@@ -39,6 +52,8 @@ func _draw() -> void:
 	for c in cells:
 		_draw_tile(c)
 	_draw_props()
+	if abs(_hover_cell.x) <= radius and abs(_hover_cell.y) <= radius:
+		_draw_highlight(_hover_cell)
 
 
 func _ring_texture(distance: int) -> Texture2D:
@@ -65,8 +80,6 @@ func _cell_to_screen(cell: Vector2i) -> Vector2:
 		(cell.x + cell.y) * STEP_Y * tile_scale
 	)
 
-
-# --- Decorative props (drawn back-to-front, on grass) ---
 
 func _draw_props() -> void:
 	var props := [
@@ -113,6 +126,18 @@ func _draw_bush(base: Vector2) -> void:
 	draw_circle(base + Vector2(0, -6), 5.0, Color(0.30, 0.60, 0.32))
 	draw_circle(base + Vector2(-2, -5), 1.2, Color(0.86, 0.27, 0.32))
 	draw_circle(base + Vector2(3, -4), 1.2, Color(0.86, 0.27, 0.32))
+
+
+func _draw_highlight(cell: Vector2i) -> void:
+	var c := _cell_to_screen(cell)
+	var hw := STEP_X * tile_scale
+	var hh := STEP_Y * tile_scale
+	var pts := PackedVector2Array([
+		c + Vector2(0, -hh), c + Vector2(hw, 0),
+		c + Vector2(0, hh), c + Vector2(-hw, 0),
+	])
+	draw_colored_polygon(pts, Color(1, 1, 1, 0.20))
+	draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), Color(1, 1, 1, 0.7), 2.0)
 
 
 func _draw_fallback(center: Vector2, distance: int) -> void:
