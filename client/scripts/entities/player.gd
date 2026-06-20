@@ -62,8 +62,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-			_target = get_global_mouse_position()
-			_has_target = true
+			var ig = get_node_or_null("../IsoGround")
+			if ig:
+				var h = ig.screen_to_hex(get_global_mouse_position())
+				ig.target_hex = h
+				ig.queue_redraw()
+				_target = ig.hex_to_screen(h.x, h.y)
+				_has_target = true
 
 
 func _physics_process(delta: float) -> void:
@@ -80,15 +85,7 @@ func _can_move() -> bool:
 
 
 func _handle_movement() -> void:
-	# WASD / arrows take priority and cancel any click target.
-	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if input_dir != Vector2.ZERO:
-		_has_target = false
-		velocity = _cartesian_to_isometric(input_dir).normalized() * speed
-		_state = State.MOVING
-		return
-
-	# Click-to-move: head straight for the clicked world point.
+	# Click-to-move: head straight for the clicked hex center.
 	if _has_target:
 		var to_target := _target - global_position
 		if to_target.length() > ARRIVE_DIST:
@@ -96,6 +93,10 @@ func _handle_movement() -> void:
 			_state = State.MOVING
 			return
 		_has_target = false
+		var ig = get_node_or_null("../IsoGround")
+		if ig and ig.target_hex != Vector2i(999, 999):
+			ig.target_hex = Vector2i(999, 999)
+			ig.queue_redraw()
 
 	velocity = Vector2.ZERO
 	_state = State.IDLE
@@ -108,6 +109,10 @@ func _cartesian_to_isometric(dir: Vector2) -> Vector2:
 func _on_gather_began() -> void:
 	_state = State.GATHERING
 	_has_target = false
+	var ig = get_node_or_null("../IsoGround")
+	if ig:
+		ig.target_hex = Vector2i(999, 999)
+		ig.queue_redraw()
 
 
 func _on_gather_ended() -> void:

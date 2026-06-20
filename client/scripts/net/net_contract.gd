@@ -21,6 +21,10 @@ const OP_GATHER_CANCELLED := 10
 const OP_NODE_STATE := 11
 const OP_NODES_SNAPSHOT := 12
 
+const OP_BUILD_REQUEST := 13
+const OP_BUILD_BROADCAST := 14
+const OP_ISLAND_SNAPSHOT := 15
+
 # --- Tunables (mirror of shared/constants/constants.json) ---
 const MAX_MOVE_SPEED := 120.0   # px/s, screen-space (Player.gd default speed)
 const MOVE_TOLERANCE := 8.0     # px latency slack

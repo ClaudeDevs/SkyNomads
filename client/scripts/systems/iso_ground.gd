@@ -27,6 +27,9 @@ var _bush: Texture2D
 var _flower: Texture2D
 
 
+var hovered_hex := Vector2i(999, 999)
+var target_hex := Vector2i(999, 999)
+
 func _ready() -> void:
 	_grass = _load("res://assets/sprites/hex_grass.png")
 	_dirt = _load("res://assets/sprites/hex_dirt.png")
@@ -37,16 +40,48 @@ func _ready() -> void:
 	_flower = _load("res://assets/sprites/flower.png")
 	queue_redraw()
 
+func _process(_delta: float) -> void:
+	var h := screen_to_hex(get_global_mouse_position())
+	if h != hovered_hex:
+		hovered_hex = h
+		queue_redraw()
 
 func _load(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
 		return load(path) as Texture2D
 	return null
 
+func hex_to_screen(q: int, r: int) -> Vector2:
+	return _hex_to_screen(q, r)
+
+func screen_to_hex(pos: Vector2) -> Vector2i:
+	var x := pos.x / tile_scale
+	var y := pos.y / tile_scale
+	
+	var r_f := y / E2_Y
+	var q_f := (x - E2_X * r_f) / E1_X
+	
+	return _axial_round(q_f, r_f)
+
+func _axial_round(q: float, r: float) -> Vector2i:
+	var s := -q - r
+	var rq := roundi(q)
+	var rr := roundi(r)
+	var rs := roundi(s)
+	
+	var q_diff := absf(rq - q)
+	var r_diff := absf(rr - r)
+	var s_diff := absf(rs - s)
+	
+	if q_diff > r_diff and q_diff > s_diff:
+		rq = -rr - rs
+	elif r_diff > s_diff:
+		rr = -rq - rs
+		
+	return Vector2i(rq, rr)
 
 func _hex_to_screen(q: int, r: int) -> Vector2:
 	return Vector2(E1_X * q + E2_X * r, E2_Y * r) * tile_scale
-
 
 func _draw() -> void:
 	var cells: Array = []
@@ -62,15 +97,19 @@ func _draw() -> void:
 		var d: int = (absi(c.x) + absi(c.y) + absi(c.x + c.y)) / 2
 		var tex := _dirt if d == radius else _grass
 		_draw_tile(tex, pos)
+		
+		if c == target_hex:
+			_draw_tile(tex, pos, Color(1.0, 1.0, 0.0, 0.4))
+		elif c == hovered_hex:
+			_draw_tile(tex, pos, Color(1.0, 1.0, 1.0, 0.3))
 
 	_draw_props()
 
-
-func _draw_tile(tex: Texture2D, pos: Vector2) -> void:
+func _draw_tile(tex: Texture2D, pos: Vector2, modulate: Color = Color.WHITE) -> void:
 	if tex == null:
 		return
 	var top_left := pos - ANCHOR * tile_scale
-	draw_texture_rect(tex, Rect2(top_left, tex.get_size() * tile_scale), false)
+	draw_texture_rect(tex, Rect2(top_left, tex.get_size() * tile_scale), false, modulate)
 
 
 func _draw_sprite_at(tex: Texture2D, q: int, r: int) -> void:
