@@ -4,18 +4,19 @@ extends CharacterBody2D
 ## Client-side movement + character rendering for the isometric (2:1) map.
 ##
 ## Character art: if `client/assets/sprites/character.png` exists it is drawn
-## (bottom-centred on the body); otherwise a simple code-drawn character is used
-## so the build never depends on the asset. A name/level tag floats above either.
+## (bottom-centred on the body); otherwise a simple code-drawn character is used.
+## A name/level tag floats above either. Camera zooms in for a game-like framing.
 ##
 ## NOTE (server authority): movement here is PREDICTION only; the authoritative
-## result comes from the Nakama movement validator via the shared OP_MOVE_*
-## contract. `speed` is sourced from the shared MAX_MOVE_SPEED.
+## result comes from the Nakama movement validator (shared OP_MOVE_*). `speed`
+## is sourced from the shared MAX_MOVE_SPEED.
 
 @export var speed: float = NetContract.MAX_MOVE_SPEED
 @export var player_name: String = "You"
 @export var level: int = 1
 @export var character_texture_path: String = "res://assets/sprites/character.png"
-@export var character_height: float = 48.0  # on-screen height in px
+@export var character_height: float = 56.0  # on-screen height in px
+@export var camera_zoom: float = 1.4
 
 const ISO_RATIO: float = 0.5  # tile_height / tile_width = 16 / 32
 
@@ -28,6 +29,10 @@ func _ready() -> void:
 	var body := get_node_or_null("Body")
 	if body != null:
 		body.visible = false
+
+	var cam := get_node_or_null("Camera2D")
+	if cam != null:
+		cam.zoom = Vector2(camera_zoom, camera_zoom)
 
 	var gather := get_node_or_null("GatheringComponent")
 	if gather != null:
@@ -77,7 +82,7 @@ func _on_gather_ended() -> void:
 # --- Rendering (local space; feet at the node origin) ---
 
 func _draw() -> void:
-	draw_colored_polygon(_ellipse(Vector2(0, 1), 8.0, 3.5), Color(0, 0, 0, 0.18))
+	draw_colored_polygon(_ellipse(Vector2(0, 1), 9.0, 4.0), Color(0, 0, 0, 0.18))
 	if _char_tex != null:
 		_draw_sprite()
 	else:
@@ -91,7 +96,6 @@ func _draw_sprite() -> void:
 		return
 	var scale_factor := character_height / tex_size.y
 	var w := tex_size.x * scale_factor
-	# Bottom-centre the sprite on the origin.
 	draw_texture_rect(_char_tex, Rect2(-w / 2.0, -character_height, w, character_height), false)
 
 
