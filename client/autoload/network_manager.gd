@@ -72,16 +72,39 @@ func connect_to_server(device_id: String = "") -> bool:
 	return true
 
 
-## Find/create the shared world match via RPC, then join it.
-func join_world() -> bool:
-	var rpc_result = await _client.rpc_async(_session, "find_world_match", "")
+## Find/create the shared hub match via RPC, then join it.
+func join_hub() -> bool:
+	var rpc_result = await _client.rpc_async(_session, "join_hub", "")
 	if rpc_result.is_exception():
-		push_error("find_world_match RPC failed: %s" % rpc_result.get_exception().message)
+		push_error("join_hub RPC failed: %s" % rpc_result.get_exception().message)
 		return false
 
 	var payload = JSON.parse_string(rpc_result.payload)
 	if payload == null or not payload.has("match_id"):
-		push_error("find_world_match returned no match_id")
+		push_error("join_hub returned no match_id")
+		return false
+	_match_id = payload["match_id"]
+
+	var match_result = await _socket.join_match_async(_match_id)
+	if match_result.is_exception():
+		push_error("join_match failed: %s" % match_result.get_exception().message)
+		return false
+
+	world_joined.emit()
+	return true
+
+
+## Find/create a private island match via RPC, then join it.
+func join_island(owner_id: String = "") -> bool:
+	var body := JSON.stringify({ "owner_id": owner_id }) if owner_id != "" else ""
+	var rpc_result = await _client.rpc_async(_session, "join_island", body)
+	if rpc_result.is_exception():
+		push_error("join_island RPC failed: %s" % rpc_result.get_exception().message)
+		return false
+
+	var payload = JSON.parse_string(rpc_result.payload)
+	if payload == null or not payload.has("match_id"):
+		push_error("join_island returned no match_id")
 		return false
 	_match_id = payload["match_id"]
 

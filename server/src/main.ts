@@ -1,9 +1,7 @@
-// Nakama module entry point. Registers the authoritative match handler and the
-// match-finder RPC. See CLAUDE.md §3 (TypeScript is the default runtime).
-
 import { WORLD_MATCH_MODULE } from "./contract/constants";
 import { worldMatch } from "./matches/world/world-match";
-import { rpcFindWorldMatch } from "./rpc/find-world-match";
+import { rpcJoinHub } from "./rpc/join-hub";
+import { rpcJoinIsland } from "./rpc/join-island";
 import { rpcGetInventory } from "./rpc/get-inventory";
 import { rpcGetWallet } from "./rpc/get-wallet";
 import { rpcMarketListItem } from "./rpc/market-list-item";
@@ -17,7 +15,8 @@ function InitModule(
   initializer: nkruntime.Initializer,
 ): void {
   initializer.registerMatch(WORLD_MATCH_MODULE, worldMatch);
-  initializer.registerRpc("find_world_match", rpcFindWorldMatch);
+  initializer.registerRpc("join_hub", rpcJoinHub);
+  initializer.registerRpc("join_island", rpcJoinIsland);
   initializer.registerRpc("get_inventory", rpcGetInventory);
   initializer.registerRpc("get_wallet", rpcGetWallet);
   initializer.registerRpc("market_list_item", rpcMarketListItem);

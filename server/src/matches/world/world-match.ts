@@ -48,16 +48,20 @@ function msToTicks(ms: number): number {
   return Math.max(1, Math.round((ms / 1000) * NET_TICK_RATE));
 }
 
-const matchInit: nkruntime.MatchInitFunction<MatchState> = function (_ctx, logger) {
+const matchInit: nkruntime.MatchInitFunction<MatchState> = function (_ctx, logger, _nk, params) {
+  const type = params.type || "hub";
+  const owner = params.owner || "";
+  const label = type === "island" ? `type:island,owner:${owner}` : `type:hub`;
+
   const nodes: { [nodeId: string]: NodeRuntime } = {};
   for (const id of Object.keys(RESOURCE_NODES)) {
     nodes[id] = { available: true, availableAtTick: 0 };
   }
-  logger.info("World match created with %d resource nodes", Object.keys(nodes).length);
+  logger.info("Match created. Label: %s, Nodes: %d", label, Object.keys(nodes).length);
   return {
     state: { players: {}, presences: {}, nodes },
     tickRate: NET_TICK_RATE,
-    label: WORLD_MATCH_LABEL,
+    label,
   };
 };
 
