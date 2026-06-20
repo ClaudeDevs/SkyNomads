@@ -16,7 +16,7 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 // Start Phaser Game
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
 
 // Connect to Nakama automatically using a random local dev name
 const randomName = "Player_" + Math.floor(Math.random() * 1000);

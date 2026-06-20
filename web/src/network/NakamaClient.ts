@@ -17,8 +17,7 @@ export class NakamaClient {
   public onBuildBroadcast: (data: any) => void = () => {};
 
   constructor() {
-    this.client = new Client("defaultkey", "127.0.0.1", "7350");
-    this.client.useSSL = false;
+    this.client = new Client("defaultkey", "127.0.0.1", "7350", false);
   }
 
   async connect(username: string): Promise<void> {
@@ -36,7 +35,7 @@ export class NakamaClient {
   async joinIsland(): Promise<void> {
     // Call the server RPC to get or create our private island match
     const result = await this.client.rpc(this.session, "join_island", {});
-    const payload = result.payload ? JSON.parse(result.payload as string) : null;
+    const payload = result.payload ? (typeof result.payload === 'string' ? JSON.parse(result.payload) : result.payload) : null;
     
     if (payload && payload.matchId) {
       this.match = await this.socket.joinMatch(payload.matchId);

@@ -64,7 +64,7 @@ export class GameScene extends Phaser.Scene {
 
     // Handle Network Events
     network.onWorldSnapshot = (data: any) => {
-      this.localPlayerId = network.session.user_id;
+      this.localPlayerId = network.session?.user_id || "";
       for (const p of data.players) {
         this.addPlayer(p.id, p.x, p.y);
       }
