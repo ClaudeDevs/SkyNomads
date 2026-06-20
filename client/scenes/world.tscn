@@ -18,6 +18,7 @@ layer = -1
 [node name="Sky" type="ColorRect" parent="Background"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 color = Color(0.41, 0.62, 0.86, 1)
 
 [node name="IsoGround" type="Node2D" parent="."]
@@ -41,6 +42,7 @@ offset_left = 24.0
 offset_top = 596.0
 offset_right = 1128.0
 offset_bottom = 628.0
+mouse_filter = 2
 text = "Connecting..."
 
 [node name="Inventory" type="Label" parent="HUD"]
@@ -48,5 +50,6 @@ offset_left = 24.0
 offset_top = 24.0
 offset_right = 320.0
 offset_bottom = 240.0
+mouse_filter = 2
 text = "Inventory: (empty)"
 script = ExtResource("8_inv")
