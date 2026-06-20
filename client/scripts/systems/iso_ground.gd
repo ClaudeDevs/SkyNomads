@@ -61,7 +61,7 @@ func _draw_tile(cell: Vector2i) -> void:
 		(cell.x - cell.y) * STEP_X * tile_scale,
 		(cell.x + cell.y) * STEP_Y * tile_scale
 	)
-	var distance := abs(cell.x) + abs(cell.y)
+	var distance: int = abs(cell.x) + abs(cell.y)
 	var tex := _ring_texture(distance)
 	if tex == null:
 		_draw_fallback(center, distance)
