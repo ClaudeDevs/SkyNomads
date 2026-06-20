@@ -112,7 +112,7 @@ export class UIScene extends Phaser.Scene {
 
         const barFill = document.createElement('div');
         barFill.style.height = '100%';
-        barFill.style.width = \`\${Math.min(100, (prog.amount / def.amount) * 100)}%\`;
+        barFill.style.width = `${Math.min(100, (prog.amount / def.amount) * 100)}%`;
         barFill.style.background = prog.completed ? '#22c55e' : '#3b82f6';
         barFill.style.transition = 'width 0.3s ease';
         barBg.appendChild(barFill);
