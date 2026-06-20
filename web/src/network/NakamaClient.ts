@@ -16,8 +16,12 @@ export class NakamaClient {
   public onIslandSnapshot: (data: any) => void = () => {};
   public onBuildBroadcast: (data: any) => void = () => {};
 
-  constructor() {
-    this.client = new Client("defaultkey", "127.0.0.1", "7350", false);
+    constructor() {
+    const env = (import.meta as any).env ?? {};
+    const host = env.VITE_NAKAMA_HOST || "127.0.0.1";
+    const port = env.VITE_NAKAMA_PORT || "7350";
+    this._useSSL = (env.VITE_NAKAMA_SSL || "false") === "true";
+    this.client = new Client("defaultkey", host, port, this._useSSL);
   }
 
   async connect(username: string): Promise<void> {
