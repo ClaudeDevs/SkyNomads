@@ -20,6 +20,7 @@ import { readInventory, writeInventory } from "../../persistence/inventory-store
 import { readIsland, writeIsland, PlacedObject } from "../../persistence/island-store";
 import { RESOURCE_NODES } from "../../data/resource-nodes";
 import { LOOT_TABLES } from "../../data/loot-tables";
+import { progressObjective } from "../../persistence/quest-store";
 
 interface GatherProgress {
   nodeId: string;
@@ -295,6 +296,9 @@ function handleBuild(
   const newObj = { q: payload.q, r: payload.r, type: payload.item_id };
   state.placedObjects.push(newObj);
   writeIsland(nk, state.owner, { placedObjects: state.placedObjects });
+  
+  // Hook into the quest system
+  progressObjective(nk, sender.userId, "build", payload.item_id, 1);
 
   dispatcher.broadcastMessage(
     OpCode.BUILD_BROADCAST,
@@ -384,6 +388,9 @@ function resolveGathers(
     if (drop.success) {
       const current = readInventory(nk, userId);
       writeInventory(nk, userId, addItem(current, drop.itemId, drop.quantity));
+      
+      // Hook into the quest system
+      progressObjective(nk, userId, "gather", drop.itemId, drop.quantity);
     }
 
     logger.info("%s gathered %s -> %s x%d", userId, nodeId, drop.itemId || "(nothing)", drop.quantity);

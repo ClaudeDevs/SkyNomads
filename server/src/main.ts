@@ -7,6 +7,8 @@ import { rpcGetWallet } from "./rpc/get-wallet";
 import { rpcMarketListItem } from "./rpc/market-list-item";
 import { rpcMarketBuy } from "./rpc/market-buy";
 import { rpcMarketListings } from "./rpc/market-listings";
+import { rpcGetQuests } from "./rpc/get-quests";
+import { rpcClaimQuest } from "./rpc/claim-quest";
 
 function InitModule(
   _ctx: nkruntime.Context,
@@ -22,6 +24,8 @@ function InitModule(
   initializer.registerRpc("market_list_item", rpcMarketListItem);
   initializer.registerRpc("market_buy", rpcMarketBuy);
   initializer.registerRpc("market_listings", rpcMarketListings);
+  initializer.registerRpc("get_quests", rpcGetQuests);
+  initializer.registerRpc("claim_quest", rpcClaimQuest);
   logger.info("SkyNomads server modules loaded.");
 }
 

@@ -5,9 +5,9 @@ import { network } from '../network/NakamaClient';
 const MAP_RADIUS = 5;
 
 export class GameScene extends Phaser.Scene {
-  private players: Map<string, Phaser.GameObjects.Graphics> = new Map();
+  private players: Map<string, Phaser.GameObjects.Container> = new Map();
   private localPlayerId: string = "";
-  private myPlayerSprite?: Phaser.GameObjects.Graphics;
+  private myPlayerSprite?: Phaser.GameObjects.Container;
   
   // Movement logic (OSRS style straight line)
   private hasTarget = false;
@@ -150,10 +150,10 @@ export class GameScene extends Phaser.Scene {
     container.add(p);
 
     container.setDepth(y + 100);
-    this.players.set(id, container as any);
+    this.players.set(id, container);
 
     if (id === this.localPlayerId) {
-      this.myPlayerSprite = container as any;
+      this.myPlayerSprite = container;
     }
   }
 

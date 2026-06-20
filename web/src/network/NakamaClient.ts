@@ -45,6 +45,16 @@ export class NakamaClient {
     }
   }
 
+  async getQuests(): Promise<any> {
+    const result = await this.client.rpc(this.session, "get_quests", {});
+    return result.payload ? (typeof result.payload === 'string' ? JSON.parse(result.payload) : result.payload) : null;
+  }
+
+  async claimQuest(questId: string): Promise<any> {
+    const result = await this.client.rpc(this.session, "claim_quest", JSON.stringify({ quest_id: questId }));
+    return result.payload ? (typeof result.payload === 'string' ? JSON.parse(result.payload) : result.payload) : null;
+  }
+
   private handleMatchData(result: any): void {
     const data = JSON.parse(new TextDecoder().decode(result.data));
     switch (result.op_code) {
