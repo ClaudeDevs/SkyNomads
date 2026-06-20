@@ -33,6 +33,11 @@ var _walk_frame := 0
 var _has_target := false
 var _target := Vector2.ZERO
 
+var build_mode := false
+var build_item := "tree"
+
+@onready var _anim := $AnimatedSprite2D
+
 
 func _ready() -> void:
 	var body := get_node_or_null("Body")
@@ -59,16 +64,30 @@ func _load_tex(path: String) -> Texture2D:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_B:
+			build_mode = !build_mode
+			print("Build mode toggled: ", build_mode)
+		elif event.keycode == KEY_1:
+			build_item = "tree"
+			print("Selected build item: tree")
+		elif event.keycode == KEY_2:
+			build_item = "rock"
+			print("Selected build item: rock")
+
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 			var ig = get_node_or_null("../IsoGround")
 			if ig:
 				var h = ig.screen_to_hex(get_global_mouse_position())
-				ig.target_hex = h
-				ig.queue_redraw()
-				_target = ig.hex_to_screen(h.x, h.y)
-				_has_target = true
+				if build_mode:
+					NetworkManager.send_build(h.x, h.y, build_item)
+				else:
+					ig.target_hex = h
+					ig.queue_redraw()
+					_target = ig.hex_to_screen(h.x, h.y)
+					_has_target = true
 
 
 func _physics_process(delta: float) -> void:

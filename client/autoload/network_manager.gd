@@ -25,6 +25,10 @@ signal gather_started(node_id: String, duration_ms: int)
 signal gather_result(node_id: String, success: bool, item_id: String, quantity: int)
 signal gather_cancelled(node_id: String, reason: String)
 
+# Island Building
+signal island_snapshot(objects: Array)
+signal object_built(q: int, r: int, type: String)
+
 @export var host: String = "127.0.0.1"
 @export var port: int = 7350
 @export var server_key: String = "defaultkey"
@@ -133,6 +137,14 @@ func send_gather(node_id: String) -> void:
 	_socket.send_match_state_async(_match_id, NetContract.OP_GATHER_REQUEST, data)
 
 
+## Ask the server to build a structure at the specified hex.
+func send_build(q: int, r: int, item_id: String) -> void:
+	if _match_id == "" or _socket == null:
+		return
+	var data := JSON.stringify({ "q": q, "r": r, "item_id": item_id })
+	_socket.send_match_state_async(_match_id, NetContract.OP_BUILD_REQUEST, data)
+
+
 ## Fetch the player's authoritative inventory from the server (non-realtime RPC).
 ## Returns a Dictionary of item_id -> quantity, or {} on failure/offline.
 func fetch_inventory() -> Dictionary:
@@ -213,3 +225,7 @@ func _on_match_state(state) -> void:
 			gather_result.emit(data["node_id"], data["success"], data["item_id"], int(data["quantity"]))
 		NetContract.OP_GATHER_CANCELLED:
 			gather_cancelled.emit(data["node_id"], data["reason"])
+		NetContract.OP_ISLAND_SNAPSHOT:
+			island_snapshot.emit(data["placedObjects"])
+		NetContract.OP_BUILD_BROADCAST:
+			object_built.emit(data["q"], data["r"], data["type"])

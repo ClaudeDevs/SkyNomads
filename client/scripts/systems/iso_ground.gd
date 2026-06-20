@@ -26,6 +26,8 @@ var _rock: Texture2D
 var _bush: Texture2D
 var _flower: Texture2D
 
+var placed_objects := []
+
 
 var hovered_hex := Vector2i(999, 999)
 var target_hex := Vector2i(999, 999)
@@ -38,6 +40,20 @@ func _ready() -> void:
 	_rock = _load("res://assets/sprites/rock.png")
 	_bush = _load("res://assets/sprites/bush.png")
 	_flower = _load("res://assets/sprites/flower.png")
+	queue_redraw()
+	
+	if NetworkManager != null:
+		NetworkManager.island_snapshot.connect(_on_island_snapshot)
+		NetworkManager.object_built.connect(_on_object_built)
+
+func _on_island_snapshot(objects: Array) -> void:
+	placed_objects.clear()
+	for obj in objects:
+		placed_objects.append([int(obj.q), int(obj.r), obj.type])
+	queue_redraw()
+
+func _on_object_built(q: int, r: int, type: String) -> void:
+	placed_objects.append([q, r, type])
 	queue_redraw()
 
 func _process(_delta: float) -> void:
@@ -126,6 +142,7 @@ func _draw_props() -> void:
 		[-1, 2, "tree_tall"], [0, 1, "rock"], [-3, 1, "bush"],
 		[3, -1, "bush"], [-1, -2, "flower"], [2, 1, "flower"],
 	]
+	props.append_array(placed_objects)
 	props.sort_custom(func(a, b): return _hex_to_screen(a[0], a[1]).y < _hex_to_screen(b[0], b[1]).y)
 	for p in props:
 		var q: int = p[0]

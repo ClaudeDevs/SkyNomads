@@ -15,6 +15,10 @@ export const OpCode = {
   GATHER_CANCELLED: 10,
   NODE_STATE: 11,
   NODES_SNAPSHOT: 12,
+
+  BUILD_REQUEST: 13,
+  BUILD_BROADCAST: 14,
+  ISLAND_SNAPSHOT: 15,
 } as const;
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];

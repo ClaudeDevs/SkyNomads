@@ -15,8 +15,9 @@ import {
 import { validateMove } from "../../validation/movement-validator";
 import { validateGather } from "../../validation/gather-validator";
 import { rollLoot } from "../../systems/loot-roller";
-import { addItem } from "../../systems/inventory";
+import { addItem, removeItem } from "../../systems/inventory";
 import { readInventory, writeInventory } from "../../persistence/inventory-store";
+import { readIsland, writeIsland, PlacedObject } from "../../persistence/island-store";
 import { RESOURCE_NODES } from "../../data/resource-nodes";
 import { LOOT_TABLES } from "../../data/loot-tables";
 
@@ -39,6 +40,9 @@ interface NodeRuntime {
 }
 
 interface MatchState {
+  owner: string;
+  isIsland: boolean;
+  placedObjects: PlacedObject[];
   players: { [userId: string]: PlayerState };
   presences: { [userId: string]: nkruntime.Presence };
   nodes: { [nodeId: string]: NodeRuntime };
@@ -52,6 +56,13 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = function (_ctx, logge
   const type = params.type || "hub";
   const owner = params.owner || "";
   const label = type === "island" ? `type:island,owner:${owner}` : `type:hub`;
+  const isIsland = type === "island";
+
+  let placedObjects: PlacedObject[] = [];
+  if (isIsland && owner !== "") {
+    const islandState = readIsland(_nk, owner);
+    placedObjects = islandState.placedObjects;
+  }
 
   const nodes: { [nodeId: string]: NodeRuntime } = {};
   for (const id of Object.keys(RESOURCE_NODES)) {
@@ -59,7 +70,7 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = function (_ctx, logge
   }
   logger.info("Match created. Label: %s, Nodes: %d", label, Object.keys(nodes).length);
   return {
-    state: { players: {}, presences: {}, nodes },
+    state: { owner, isIsland, placedObjects, players: {}, presences: {}, nodes },
     tickRate: NET_TICK_RATE,
     label,
   };
@@ -128,6 +139,12 @@ const matchJoin: nkruntime.MatchJoinFunction<MatchState> = function (
       }),
       [presence],
     );
+
+    dispatcher.broadcastMessage(
+      OpCode.ISLAND_SNAPSHOT,
+      JSON.stringify({ placedObjects: state.placedObjects }),
+      [presence],
+    );
   }
   return { state };
 };
@@ -177,6 +194,9 @@ const matchLoop: nkruntime.MatchLoopFunction<MatchState> = function (
         break;
       case OpCode.GATHER_REQUEST:
         handleGather(dispatcher, tick, state, message.sender, player, payload);
+        break;
+      case OpCode.BUILD_REQUEST:
+        handleBuild(dispatcher, nk, logger, state, message.sender, player, payload);
         break;
       default:
         break;
@@ -236,6 +256,51 @@ function handleMove(
       [sender],
     );
   }
+}
+
+function handleBuild(
+  dispatcher: nkruntime.MatchDispatcher,
+  nk: nkruntime.Nakama,
+  logger: nkruntime.Logger,
+  state: MatchState,
+  sender: nkruntime.Presence,
+  player: PlayerState,
+  payload: { q: number; r: number; item_id: string },
+): void {
+  // Only the owner can build on their island
+  if (!state.isIsland || sender.userId !== state.owner) {
+    return;
+  }
+
+  // Basic validation
+  if (typeof payload.q !== "number" || typeof payload.r !== "number" || !payload.item_id) {
+    return;
+  }
+
+  // Deduct item from inventory
+  const inventory = readInventory(nk, sender.userId);
+  const result = removeItem(inventory, payload.item_id, 1);
+  if (!result.ok) {
+    return; // Don't have the item
+  }
+
+  // Check if position is already occupied
+  const existing = state.placedObjects.find((obj: PlacedObject) => obj.q === payload.q && obj.r === payload.r);
+  if (existing) {
+    return; // Already occupied
+  }
+
+  writeInventory(nk, sender.userId, result.inventory);
+
+  const newObj = { q: payload.q, r: payload.r, type: payload.item_id };
+  state.placedObjects.push(newObj);
+  writeIsland(nk, state.owner, { placedObjects: state.placedObjects });
+
+  dispatcher.broadcastMessage(
+    OpCode.BUILD_BROADCAST,
+    JSON.stringify(newObj),
+  );
+  logger.info("%s built %s at %d, %d", sender.userId, payload.item_id, payload.q, payload.r);
 }
 
 function handleGather(
