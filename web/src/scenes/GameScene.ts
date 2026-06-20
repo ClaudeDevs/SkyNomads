@@ -122,7 +122,7 @@ export class GameScene extends Phaser.Scene {
       
       // Bouncing animation while walking
       const bounce = this.hasTarget ? Math.abs(Math.sin(_time / 100)) * 5 : 0;
-      this.myPlayerSprite.getChildren().forEach((child: any) => {
+      this.myPlayerSprite.each((child: any) => {
          if (child.name === 'body') child.y = -40 - bounce;
       });
 

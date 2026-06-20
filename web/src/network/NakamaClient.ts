@@ -51,7 +51,7 @@ export class NakamaClient {
   }
 
   async claimQuest(questId: string): Promise<any> {
-    const result = await this.client.rpc(this.session, "claim_quest", JSON.stringify({ quest_id: questId }));
+    const result = await this.client.rpc(this.session, "claim_quest", { quest_id: questId });
     return result.payload ? (typeof result.payload === 'string' ? JSON.parse(result.payload) : result.payload) : null;
   }
 
