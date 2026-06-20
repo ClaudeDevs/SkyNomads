@@ -9,6 +9,7 @@ const config: Phaser.Types.Core.GameConfig = {
   width: window.innerWidth,
   height: window.innerHeight,
   pixelArt: true,
+  transparent: true,
   scale: {
     mode: Phaser.Scale.RESIZE,
   },
