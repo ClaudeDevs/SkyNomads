@@ -1,0 +1,5 @@
+# Auto-HTTPS reverse proxy. Caddy fetches a free Let's Encrypt cert for $DOMAIN
+# and proxies everything (REST + WebSocket upgrade) to Nakama on :7350.
+{$DOMAIN} {
+	reverse_proxy nakama:7350
+}
